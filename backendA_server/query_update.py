@@ -49,7 +49,7 @@ def info(book_id):
 
 
 # --------------------------------------------------------------------------#
-@app.route('/update/<book_id>/price/<price>')
+@app.route('/update/<book_id>/price/<price>', methods=['PUT', 'GET'])
 def update_price(book_id, price):
     conn = get_db_connection()
     cur = conn.cursor()

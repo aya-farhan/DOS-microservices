@@ -6,14 +6,16 @@ import datetime
 
 app = Flask(__name__)
 
-#this micro service responsibility is to maintain purchases and deliver them if items are found by quering catalog_server
 
-#this function o establish db-sqlite3 connection 
+# this micro service responsibility is to maintain purchases and deliver them if items are found by quering
+# catalog_server
+
+# this function o establish db-sqlite3 connection
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
-    
+
 
 def add_order_to_db(book_id):
     conn = sqlite3.connect('database.db')
@@ -21,34 +23,33 @@ def add_order_to_db(book_id):
     sqlite_insert_query_0 = """INSERT INTO orders
                           (book_id) 
                            VALUES 
-                          ("""+str(book_id)+""")"""    
+                          (""" + str(book_id) + """)"""
     cur.execute(sqlite_insert_query_0)
     conn.commit()
     conn.close()
-    
-    
-@app.route('/purchase/<book_id>')
+
+
+@app.route('/purchase/<book_id>', methods=['POST', 'PUT'])
 def index(book_id):
-    order_completed=False
-    #first check catalog server to see if book is in store
-    is_available = requests.get('http://192.168.1.4:5001/query/'+str(book_id)).json()
-    
-    #if there's a book/s server presents the purchase so it update the info of this book in catalog db by decreasing its amount
+    order_completed = False
+    # first check catalog server to see if book is in store
+    is_available = requests.get('http://192.168.1.4:5001/query/' + str(book_id)).json()
+
+    # if there's a book/s server presents the purchase so it update the info of this book in catalog db by decreasing
+    # its amount
     if is_available['result']:
-        update_query = requests.put('http://192.168.1.4:5001/update/'+str(book_id)+'/amount_of_items/'+str(-1))
-        if(update_query.status_code==200):
-            order_completed=True
+        update_query = requests.put('http://192.168.1.4:5001/update/' + str(book_id) + '/amount_of_items/' + str(-1))
+        if update_query.status_code == 200:
+            order_completed = True
             add_order_to_db(book_id)
-            return jsonify({'result':'your purchase done successfully'})
+            return jsonify({'result': 'your purchase done successfully'})
 
         else:
-            order_completed=False
+            order_completed = False
             add_order_to_db(book_id)
-            return jsonify({'result':'try again later'})
+            return jsonify({'result': 'try again later'})
 
-        
     else:
-        order_completed=False
+        order_completed = False
         add_order_to_db(book_id)
-        return jsonify({'reulst':'this book is no longer available in the store'})         
-
+        return jsonify({'reulst': 'this book is no longer available in the store'})
